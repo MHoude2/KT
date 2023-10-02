@@ -25,6 +25,28 @@ def FtS(domain,pump,z_list,k,t):
     Prod = Expfac*pump(z_list,t)*domain
     return np.sum(Prod,axis=2)
 
+def FtS2(domain,pump,z_list,k,t):
+    """Generates the fourier transform evaluated at (k,t) of the product of the domain configuration 
+    and pump pulse as functions of (z,t) via looping over k. This should allow for more k-values
+    when compared to FtS which uses np.tensordot which doesn't work for large sets of k.
+
+    Args:
+        domain (array): array of +/- 1's characterizing the domain configuration
+        pump (function): functional form of pump pulse as a function of (z,t) normalized to Np
+        z_list (array): list of position values, taken at center point, of crystal positions
+        k (array): array momentum values
+    Returns:
+        (array): S(k+k',t) matrix for a specific time 't' 
+    """
+    S = np.zeros((len(k),len(k)),dtype=np.complex128)
+    dz = z_list[1]-z_list[0]
+
+    for i in range(len(k)):
+        for l in range(len(k)):
+            S[i,l] = np.sum(np.exp(-1j*(k[i]+k[l])*z_list)*pump(z_list,t)*domain/np.sqrt(2*np.pi)*dz)
+
+    return S
+
 
 def Total_prop(domain,pump,z_list,k,t,ws,wi):
     """Generates the total Heisenberg propagator
@@ -49,7 +71,7 @@ def Total_prop(domain,pump,z_list,k,t,ws,wi):
     Ri = np.diag(1j*wi)
     
     for i in t:
-        S = 1j*FtS(domain,pump,z_list,k,i)*dk/np.sqrt(2*np.pi)
+        S = 1j*FtS2(domain,pump,z_list,k,i)*dk/np.sqrt(2*np.pi)
         Q = np.block([[Rs,S],[np.conjugate(S),Ri]])
         K = expm(Q*dt)@K
 
