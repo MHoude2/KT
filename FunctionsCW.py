@@ -21,13 +21,10 @@ def Total_propCW(k,t,ws,wi,Np,l):
     dk = k[1]-k[0]
     dt = t[1]-t[0]
     
-    #Constructing the diagonal blocks
-    Rs = np.diag(-1j*ws)
-    Ri = np.diag(1j*wi)
     
     for i in t:
-        S = 1j*(np.sqrt(Np)*l*dk/(2*np.pi))*np.sinc(l*(k+k[:,np.newaxis])/(2*np.pi)) #Extra factors of pi due to np.sinc definition
-        Q = np.block([[Rs,S],[np.conjugate(S),Ri]])
+        S = 1j*(np.sqrt(Np)*l*dk/(2*np.pi))*np.sinc(l*(k+k[:,np.newaxis])/(2*np.pi))*np.exp(1j*(ws+wi[:,np.newaxis])*i) #Extra factors of pi due to np.sinc definition
+        Q = np.block([[0*np.eye(len(S)),S],[np.conjugate(S),0*np.eye(len(S))]])
         K = expm(Q*dt)@K
 
     return K
